@@ -10,25 +10,29 @@ function App(): JSX.Element {
   })
   const [polling, setPolling] = useState<boolean>(false)
 
+  // Simulates polling (getting value from device every 1 second)
   useEffect(() => {
     if (!polling) return
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       if (connectedCharacteristic.current) {
-        connect()
+        await connect()
       }
     }, 1_000)
 
     return () => clearInterval(interval)
   }, [polling])
 
+  // state for showing the connection status / messages
   const [connectionStatus, setConnectionStatus] = useState<string>('')
 
+  // Use these as "storage" so that we don't need to reconnect every time
   const connectedDevice = useRef<BluetoothDevice | undefined>(undefined)
   const connectedServer = useRef<BluetoothRemoteGATTServer | undefined>(undefined)
   const connectedService = useRef<BluetoothRemoteGATTService | undefined>(undefined)
   const connectedCharacteristic = useRef<BluetoothRemoteGATTCharacteristic | undefined>(undefined)
 
   async function connect(): Promise<void> {
+    // Check if the current device has bluetooth
     const available = await navigator.bluetooth.getAvailability()
     if (!available) {
       setError({
@@ -38,9 +42,16 @@ function App(): JSX.Element {
       return
     }
 
+    /**
+     * For a proprietary device, I believe this is the
+     * correct syntax to connect to it.
+     * services: ['device-specific-service-uuid']
+     */
+
     try {
       setConnectionStatus('Requesting Bluetooth Device')
       if (!connectedDevice.current) {
+        // Request a device
         connectedDevice.current = await navigator.bluetooth.requestDevice({
           filters: [
             {
@@ -51,20 +62,24 @@ function App(): JSX.Element {
         setConnectionStatus(`Found device ${connectedDevice.current.name}`)
       }
       if (!connectedServer.current) {
+        // Connect to the device as a gatt server
         connectedServer.current = await connectedDevice.current?.gatt?.connect()
       }
       if (!connectedService.current) {
         setConnectionStatus(`Getting Heart Rate service`)
+        // Get the heart rate service
         connectedService.current = await connectedServer?.current?.getPrimaryService('heart_rate')
       }
 
       if (!connectedCharacteristic.current) {
         setConnectionStatus('Reading Heart Rate Control Point')
+        // Get the heart rate control point characteristic
         connectedCharacteristic.current = await connectedService?.current?.getCharacteristic(
           'heart_rate_control_point'
         )
       }
 
+      // Read the value
       const value = await connectedCharacteristic?.current?.readValue()
 
       if (value!.byteLength >= 2) {
@@ -75,6 +90,7 @@ function App(): JSX.Element {
           message: ''
         })
         console.log(bufferToHex(value!.buffer))
+        // Convert the buffer to a hex string
         setConnectionStatus(`Value is ${bufferToHex(value!.buffer)}`)
       }
     } catch (err: any) {
@@ -82,6 +98,8 @@ function App(): JSX.Element {
       connectedServer.current = undefined
       connectedService.current = undefined
       connectedCharacteristic.current = undefined
+
+      // If there's an erorr, set the error state
       setError({
         active: true,
         message: err.message
@@ -91,20 +109,17 @@ function App(): JSX.Element {
 
   async function setHeartRate(): Promise<void> {
     try {
-      // if (!connectedDevice.current) {
-      //   setError({
-      //     active: true,
-      //     message: 'Please connect to a device'
-      //   })
-      // }
+      // Generate a random number between 0 and 100
       const randInt = Math.floor(Math.random() * 100)
       const heartRateValue = randInt
       const buffer = new Uint8Array(1)
       buffer[0] = heartRateValue
-
+      // Write the value to the characteristic
       await connectedCharacteristic?.current?.writeValue(buffer)
+      // Read the new value
       await connect()
     } catch (err: any) {
+      // If there's an erorr, set the error state
       setError({
         active: true,
         message: err.message
@@ -146,7 +161,9 @@ function App(): JSX.Element {
           Set Heart Rate
         </button>
       </div>
+      {/* Connection Messages */}
       {connectionStatus !== '' && <StatusMessage message={connectionStatus} />}
+      {/* Error Message */}
       {error.active && <ErrorMessage message={error.message} />}
     </div>
   )
