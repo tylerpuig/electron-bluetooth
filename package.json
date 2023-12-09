@@ -21,8 +21,7 @@
   },
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
-    "@electron-toolkit/utils": "^2.0.0",
-    "ble-host": "^1.0.3"
+    "@electron-toolkit/utils": "^2.0.0"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^1.0.1",
@@ -31,6 +30,7 @@
     "@types/node": "^18.17.5",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
+    "@types/web-bluetooth": "^0.0.20",
     "@vitejs/plugin-react": "^4.0.4",
     "autoprefixer": "^10.4.16",
     "electron": "^25.6.0",
