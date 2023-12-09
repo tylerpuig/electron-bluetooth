@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { bufferToHex } from '../utils'
 import ErrorMessage from './components/ErrorMessage'
 import StatusMessage from './components/StatusMessage'
@@ -8,6 +8,18 @@ function App(): JSX.Element {
     active: false,
     message: ''
   })
+  const [polling, setPolling] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (!polling) return
+    const interval = setInterval(() => {
+      if (connectedCharacteristic.current) {
+        connect()
+      }
+    }, 1_000)
+
+    return () => clearInterval(interval)
+  }, [polling])
 
   const [connectionStatus, setConnectionStatus] = useState<string>('')
 
@@ -66,6 +78,10 @@ function App(): JSX.Element {
         setConnectionStatus(`Value is ${bufferToHex(value!.buffer)}`)
       }
     } catch (err: any) {
+      connectedDevice.current = undefined
+      connectedServer.current = undefined
+      connectedService.current = undefined
+      connectedCharacteristic.current = undefined
       setError({
         active: true,
         message: err.message
@@ -75,12 +91,12 @@ function App(): JSX.Element {
 
   async function setHeartRate(): Promise<void> {
     try {
-      if (!connectedDevice.current) {
-        setError({
-          active: true,
-          message: 'Please connect to a device'
-        })
-      }
+      // if (!connectedDevice.current) {
+      //   setError({
+      //     active: true,
+      //     message: 'Please connect to a device'
+      //   })
+      // }
       const randInt = Math.floor(Math.random() * 100)
       const heartRateValue = randInt
       const buffer = new Uint8Array(1)
@@ -102,6 +118,18 @@ function App(): JSX.Element {
         <h1 className="mt-4 text-2xl text-white font-medium p-4 border-2 border-white rounded-xl">
           Electron Bluetooth
         </h1>
+        <div className="absolute top-5 right-5">
+          <button
+            onClick={() => setPolling((prev) => !prev)}
+            className={
+              polling
+                ? `p-2 rounded-xl border-2 text-white font-medium bg-blue-700`
+                : `p-2 rounded-xl border-2 text-white font-medium hover:bg-blue-700`
+            }
+          >
+            Polling
+          </button>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-4 px-4">
         <button
