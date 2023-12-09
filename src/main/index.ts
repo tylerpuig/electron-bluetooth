@@ -38,9 +38,12 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.on('select-bluetooth-device', (event, deviceList, callback) => {
-    console.log(deviceList)
+    // console.log(deviceList)
     event.preventDefault()
     selectBluetoothCallback = callback
+    for (const device of deviceList) {
+      console.log(device)
+    }
     const result = deviceList.find((device) => {
       return device.deviceName === 'test'
     })
@@ -79,8 +82,8 @@ function createWindow(): void {
 }
 
 // Enable webBluetooth
-// app.commandLine.appendSwitch('enable-experimental-web-platform-features', 'true')
-// app.commandLine.appendSwitch('enable-web-bluetooth', 'true')
+app.commandLine.appendSwitch('enable-experimental-web-platform-features', 'true')
+app.commandLine.appendSwitch('enable-web-bluetooth', 'true')
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
