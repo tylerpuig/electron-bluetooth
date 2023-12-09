@@ -3,25 +3,49 @@ import { useEffect } from 'react'
 
 function App(): JSX.Element {
   async function connect() {
-    navigator.bluetooth.getAvailability().then((available) => {
-      if (available) {
-        console.log('This device supports Bluetooth!')
-      } else {
-        console.log('Doh! Bluetooth is not supported')
-      }
-    })
+    // navigator.bluetooth.getAvailability().then((available) => {
+    //   if (available) {
+    //     console.log('This device supports Bluetooth!')
+    //   } else {
+    //     console.log('Doh! Bluetooth is not supported')
+    //   }
+    // })
     try {
-      const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true
-      })
-
-      const devices = await navigator.bluetooth.getDevices()
-      console.log(devices)
-
-      // Further code to handle the connected device
+      console.log('Requesting Bluetooth Device to get heart rate data...')
+      navigator.bluetooth
+        .requestDevice({
+          filters: [
+            {
+              services: ['heart_rate']
+            }
+          ]
+        })
+        .then((device) => {
+          console.log('Got device: ', device.name)
+          console.log('id: ', device.id)
+          return device.gatt.connect()
+        })
+        .then((server) => {
+          console.log('Getting Heart Rate Service…')
+          return server.getPrimaryService('heart_rate')
+        })
+        .then((service) => {
+          console.log('Getting Heart Rate Control Point Characteristic…')
+          return service.getCharacteristic('heart_rate_control_point')
+        })
+        .then((characteristic) => {
+          console.log('Reading Heart Rate Control Point…')
+          return characteristic.readValue()
+        })
+        .then((value) => {
+          value = value.buffer ? value : new DataView(value)
+          console.log('Heart Rate Control Point: ', value.getUint16())
+        })
+        .catch((exception) => {
+          console.log(exception)
+        })
     } catch (error) {
-      console.error('Bluetooth device selection was cancelled', error)
-      // Handle the error or cancellation here
+      console.error(error)
     }
   }
 
