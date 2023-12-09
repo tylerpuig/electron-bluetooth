@@ -31,6 +31,14 @@ function App(): JSX.Element {
   const connectedService = useRef<BluetoothRemoteGATTService | undefined>(undefined)
   const connectedCharacteristic = useRef<BluetoothRemoteGATTCharacteristic | undefined>(undefined)
 
+  // Function to clear connection data
+  function clearRefs(): void {
+    connectedDevice.current = undefined
+    connectedServer.current = undefined
+    connectedService.current = undefined
+    connectedCharacteristic.current = undefined
+  }
+
   async function connect(): Promise<void> {
     // Check if the current device has bluetooth
     const available = await navigator.bluetooth.getAvailability()
@@ -94,10 +102,7 @@ function App(): JSX.Element {
         setConnectionStatus(`Value is ${bufferToHex(value!.buffer)}`)
       }
     } catch (err: any) {
-      connectedDevice.current = undefined
-      connectedServer.current = undefined
-      connectedService.current = undefined
-      connectedCharacteristic.current = undefined
+      clearRefs()
 
       // If there's an erorr, set the error state
       setError({
@@ -119,6 +124,7 @@ function App(): JSX.Element {
       // Read the new value
       await connect()
     } catch (err: any) {
+      clearRefs()
       // If there's an erorr, set the error state
       setError({
         active: true,
