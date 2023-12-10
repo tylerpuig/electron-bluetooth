@@ -92,15 +92,18 @@ function App(): JSX.Element {
 
       if (value!.byteLength >= 2) {
         console.log('Heart Rate Control Point: ', value!.getUint16(0))
+        setConnectionStatus(`Value is ${value!.getUint16(0)}`)
       } else {
-        setError({
-          active: false,
-          message: ''
-        })
         console.log(bufferToHex(value!.buffer))
         // Convert the buffer to a hex string
         setConnectionStatus(`Value is ${bufferToHex(value!.buffer)}`)
       }
+
+      if (error.active)
+        setError({
+          active: false,
+          message: ''
+        })
     } catch (err: any) {
       clearRefs()
 

@@ -1,10 +1,7 @@
-import { app, shell, BrowserWindow, ipcMain, Menu } from 'electron'
+import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-
-let bluetoothPinCallback
-let selectBluetoothCallback
 
 function createWindow(): void {
   // Create the browser window.
@@ -25,11 +22,6 @@ function createWindow(): void {
     mainWindow.webContents.openDevTools()
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
-
   mainWindow.webContents.on('select-bluetooth-device', (event, devices, callback) => {
     event.preventDefault()
     if (devices.length > 0) {
@@ -37,28 +29,7 @@ function createWindow(): void {
     }
   })
 
-  // mainWindow.webContents.on('select-bluetooth-device', (event, deviceList, callback) => {
-  //   // console.log(deviceList)
-  //   event.preventDefault()
-  //   selectBluetoothCallback = callback
-  //   for (const device of deviceList) {
-  //     console.log(device)
-  //   }
-  //   const result = deviceList.find((device) => {
-  //     return device.deviceName === 'test'
-  //   })
-  //   if (result) {
-  //     callback(result.deviceId)
-  //   } else {
-  //     // The device wasn't found so we need to either wait longer (eg until the
-  //     // device is turned on) or until the user cancels the request
-  //   }
-  // })
-
-  ipcMain.on('cancel-bluetooth-request', (event) => {
-    console.log(event)
-    selectBluetoothCallback('')
-  })
+  // These are available, but not used currently
 
   // Listen for a message from the renderer to get the response for the Bluetooth pairing.
   // ipcMain.on('bluetooth-pairing-response', (event, response) => {
@@ -71,6 +42,11 @@ function createWindow(): void {
   //   // Send a message to the renderer to prompt the user to confirm the pairing.
   //   mainWindow.webContents.send('bluetooth-pairing-request', details)
   // })
+
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
